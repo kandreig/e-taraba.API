@@ -52,7 +52,6 @@ namespace e_taraba.API.Controllers
 
 
             var informationToReturn = new { acces_token = accesToken, refresh_token = rToken, user = userToReturn };
-
             return Ok(informationToReturn);
         }
 
