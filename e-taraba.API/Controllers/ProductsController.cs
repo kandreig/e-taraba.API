@@ -73,8 +73,27 @@ namespace e_taraba.API.Controllers
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<ProductForCreationDto>> CreateProduct(
-            [FromBody]ProductForCreationDto productFromBody)
+            [FromForm]ProductForCreationDto productFromBody, IFormFile? Image = null)
         {
+
+
+
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(),"Images");
+            productFromBody.PhotoFolderPath = folderPath;
+            productFromBody.PhotoId = Guid.NewGuid().ToString();
+
+            var photoIdWithExtension = productFromBody.PhotoId + ".jpg";
+
+            var imagePath = Path.Combine(folderPath, photoIdWithExtension);
+
+            using (FileStream stream = new FileStream(imagePath, FileMode.Create, FileAccess.ReadWrite))
+            {
+                await Image.CopyToAsync(stream);
+                stream.Close();
+            }
+
+
+
             var productToCreate = mapper.Map<Entities.Product>(productFromBody);
 
             await repository.CreateProductASync(productToCreate);

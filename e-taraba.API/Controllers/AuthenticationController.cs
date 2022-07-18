@@ -110,7 +110,7 @@ namespace e_taraba.API.Controllers
 
 
 
-        private async Task<string> GenerateRToken(UserForClaimsDto user, string oldRToken = null)
+        private async Task<string> GenerateRToken(UserForClaimsDto user, string? oldRToken = null)
         {
 
             if(oldRToken != null)
