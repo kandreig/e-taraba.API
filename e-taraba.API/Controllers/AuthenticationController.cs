@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using e_taraba.API.DTOs;
 using e_taraba.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -51,7 +52,7 @@ namespace e_taraba.API.Controllers
             var rToken = await GenerateRToken(userForClaimsDto);
 
 
-            var informationToReturn = new { acces_token = accesToken, refresh_token = rToken, user = userToReturn };
+            var informationToReturn = new { access_token = accesToken, refresh_token = rToken, user = userToReturn };
             return Ok(informationToReturn);
         }
 
@@ -73,7 +74,7 @@ namespace e_taraba.API.Controllers
 
             if(RTokenFromDb == null || RTokenFromDb.Expires < DateTime.UtcNow)
             {
-                return Unauthorized("Invalid token request");
+                return Unauthorized("Invalid token request. Please login again");
             }
 
             var userOfToken = await repository.GetUserASync(RTokenFromDb.UserId, true);
@@ -88,14 +89,8 @@ namespace e_taraba.API.Controllers
                 }
                 await repository.SaveChangesASync();
 
-
                 return Unauthorized("Fraud detected, loggin out user");
             }
-
-           
-            
-
-            
 
             var userForClaims = mapper.Map<UserForClaimsDto>(userOfToken);
 
@@ -103,12 +98,17 @@ namespace e_taraba.API.Controllers
             var createdRefreshToken = await GenerateRToken(userForClaims,RToken);
 
 
-            var informationToReturn = new { acces_token = createdAccesToken, refresh_token = createdRefreshToken};
+            var informationToReturn = new { access_token = createdAccesToken, refresh_token = createdRefreshToken, username = userOfToken.Username};
 
             return Ok(informationToReturn);
         }
 
-
+        [Authorize]
+        [HttpPost("check-atoken")]
+        public async Task<ActionResult> CheckAccessToken()
+        {
+            return Ok("Access token is valid");
+        }
 
         private async Task<string> GenerateRToken(UserForClaimsDto user, string? oldRToken = null)
         {

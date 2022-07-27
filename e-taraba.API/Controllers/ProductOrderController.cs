@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using e_taraba.API.DTOs;
+using e_taraba.API.SearchParameters;
 using e_taraba.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace e_taraba.API.Controllers
             this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
+
 
         [HttpGet("{id}", Name = "GetProductOrder")]
         public async Task<ActionResult<ProductOrderDto>> GetProductOrder(int id)

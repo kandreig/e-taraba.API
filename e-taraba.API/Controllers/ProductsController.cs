@@ -56,15 +56,15 @@ namespace e_taraba.API.Controllers
         }
 
 
-        [HttpGet("order/{id}")]
-        public async Task<ActionResult<IEnumerable<ProductWithoutOrdersDto>>> GetProductsForOrder(int id)
+        [HttpGet("order/{idOrder}")]
+        public async Task<ActionResult<IEnumerable<ProductWithoutOrdersDto>>> GetProductsForOrder(int idOrder)
         {
-            if(!await repository.OrderExistsAsync(id))
+            if(!await repository.OrderExistsAsync(idOrder))
             {
                 return NotFound();
             }
 
-            var productsOfOrder = await repository.GetProductsForOrderASync(id);
+            var productsOfOrder = await repository.GetProductsForOrderASync(idOrder);
             var productsToReturn = mapper.Map<IEnumerable<ProductWithoutOrdersDto>>(productsOfOrder);
 
             return Ok(productsToReturn);
@@ -81,6 +81,8 @@ namespace e_taraba.API.Controllers
             var folderPath = Path.Combine(Directory.GetCurrentDirectory(),"Images");
             productFromBody.PhotoFolderPath = folderPath;
             productFromBody.PhotoId = Guid.NewGuid().ToString();
+
+
 
             var photoIdWithExtension = productFromBody.PhotoId + ".jpg";
 
@@ -111,14 +113,40 @@ namespace e_taraba.API.Controllers
 
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateProduct(int id, [FromBody] ProductForUpdateDto productForUpdate)
+        public async Task<ActionResult> UpdateProduct(int id, [FromForm] ProductForUpdateDto productForUpdate, IFormFile? Image = null)
         {
+
             if (!await repository.ProductExistsAsync(id))
             {
                 return NotFound("Product was not found");
             }
 
             var productFromDb = await repository.GetProductASync(id, false);
+
+            if (Image != null)
+            {
+                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Images");
+                productForUpdate.PhotoFolderPath = folderPath;
+                productForUpdate.PhotoId = Guid.NewGuid().ToString();
+
+                var photoIdWithExtension = productForUpdate.PhotoId + ".jpg";
+
+                var imagePath = Path.Combine(folderPath, photoIdWithExtension);
+
+                using (FileStream stream = new FileStream(imagePath, FileMode.Create, FileAccess.ReadWrite))
+                {
+                    await Image.CopyToAsync(stream);
+                    stream.Close();
+                }
+
+            }
+            else
+            {
+                productForUpdate.PhotoId = productFromDb.PhotoId;
+                productForUpdate.PhotoFolderPath = productFromDb.PhotoFolderPath;
+            }
+
+
 
             mapper.Map(productForUpdate, productFromDb);
             await repository.SaveChangesASync();
